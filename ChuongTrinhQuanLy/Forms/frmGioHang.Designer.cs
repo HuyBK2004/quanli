@@ -3,16 +3,9 @@ namespace Forms
     partial class frmGioHang
     {
         private System.ComponentModel.IContainer components = null;
-        private System.Windows.Forms.DataGridView dgvGioHang;
-        private System.Windows.Forms.TextBox txtMaSP;
-        private System.Windows.Forms.TextBox txtSoLuong;
-        private System.Windows.Forms.Button btnThem;
-        private System.Windows.Forms.Button btnXoa;
-        private System.Windows.Forms.Button btnDatHang;
-        private System.Windows.Forms.Label lblMaSP;
-        private System.Windows.Forms.Label lblSoLuong;
-        private System.Windows.Forms.Label lblTitle;
-        private System.Windows.Forms.Panel pnlMain;
+private System.Windows.Forms.DataGridView dgvGioHang;
+private System.Windows.Forms.Label lblTongTien;
+private System.Windows.Forms.Button btnThanhToan;
 
         private void InitializeComponent()
         {
