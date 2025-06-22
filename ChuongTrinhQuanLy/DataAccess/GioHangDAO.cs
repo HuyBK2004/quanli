@@ -1,72 +1,50 @@
-using System;
 using System.Collections.Generic;
 using System.Data;
-using MySql.Data.MySqlClient;
-using DTO;
+using System.Data.SqlClient;
 
-namespace DataAccess
+public class GioHangDAO
 {
-    public class GioHangDAO
+    public static void ThemVaoGioHang(int maNguoiDung, int maSP, int soLuong)
     {
-        public static List<GioHang> GetByUser(int maNguoiDung)
-        {
-            string sql = "SELECT * FROM GioHang WHERE MaNguoiDung=@ID";
-            var dt = DBHelper.ExecuteQuery(sql, new MySqlParameter("@ID", maNguoiDung));
-            var list = new List<GioHang>();
-            foreach (DataRow row in dt.Rows)
-                list.Add(Map(row));
-            return list;
-        }
+        string sql = @"IF EXISTS (SELECT 1 FROM GioHang WHERE MaNguoiDung = @maNguoiDung AND MaSP = @maSP)
+                       UPDATE GioHang SET SoLuong = SoLuong + @soLuong WHERE MaNguoiDung = @maNguoiDung AND MaSP = @maSP
+                       ELSE
+                       INSERT INTO GioHang(MaNguoiDung, MaSP, SoLuong) VALUES(@maNguoiDung, @maSP, @soLuong)";
+        DBHelper.ExecuteNonQuery(sql,
+            new SqlParameter("@maNguoiDung", maNguoiDung),
+            new SqlParameter("@maSP", maSP),
+            new SqlParameter("@soLuong", soLuong));
+    }
 
-        public static bool Insert(GioHang gh)
-        {
-            string sql = @"INSERT INTO GioHang (MaNguoiDung, MaSP, SoLuong)
-                        VALUES (@MaNguoiDung, @MaSP, @SoLuong)";
-            int res = DBHelper.ExecuteNonQuery(sql,
-                new MySqlParameter("@MaNguoiDung", gh.MaNguoiDung),
-                new MySqlParameter("@MaSP", gh.MaSP),
-                new MySqlParameter("@SoLuong", gh.SoLuong)
-            );
-            return res > 0;
-        }
+    public static void XoaKhoiGioHang(int maNguoiDung, int maSP)
+    {
+        string sql = "DELETE FROM GioHang WHERE MaNguoiDung = @maNguoiDung AND MaSP = @maSP";
+        DBHelper.ExecuteNonQuery(sql,
+            new SqlParameter("@maNguoiDung", maNguoiDung),
+            new SqlParameter("@maSP", maSP));
+    }
 
-        public static bool Update(GioHang gh)
-        {
-            string sql = @"UPDATE GioHang SET SoLuong=@SoLuong
-                           WHERE MaNguoiDung=@MaNguoiDung AND MaSP=@MaSP";
-            int res = DBHelper.ExecuteNonQuery(sql,
-                new MySqlParameter("@SoLuong", gh.SoLuong),
-                new MySqlParameter("@MaNguoiDung", gh.MaNguoiDung),
-                new MySqlParameter("@MaSP", gh.MaSP)
-            );
-            return res > 0;
-        }
+    public static void XoaToanBoGioHang(int maNguoiDung)
+    {
+        string sql = "DELETE FROM GioHang WHERE MaNguoiDung = @maNguoiDung";
+        DBHelper.ExecuteNonQuery(sql,
+            new SqlParameter("@maNguoiDung", maNguoiDung));
+    }
 
-        public static bool Delete(int maNguoiDung, int maSP)
+    public static List<GioHang> LayGioHang(int maNguoiDung)
+    {
+        List<GioHang> ds = new List<GioHang>();
+        string sql = "SELECT * FROM GioHang WHERE MaNguoiDung = @maNguoiDung";
+        DataTable dt = DBHelper.ExecuteQuery(sql, new SqlParameter("@maNguoiDung", maNguoiDung));
+        foreach (DataRow row in dt.Rows)
         {
-            string sql = "DELETE FROM GioHang WHERE MaNguoiDung=@MaNguoiDung AND MaSP=@MaSP";
-            int res = DBHelper.ExecuteNonQuery(sql,
-                new MySqlParameter("@MaNguoiDung", maNguoiDung),
-                new MySqlParameter("@MaSP", maSP)
-            );
-            return res > 0;
-        }
-
-        public static bool Clear(int maNguoiDung)
-        {
-            string sql = "DELETE FROM GioHang WHERE MaNguoiDung=@MaNguoiDung";
-            int res = DBHelper.ExecuteNonQuery(sql, new MySqlParameter("@MaNguoiDung", maNguoiDung));
-            return res > 0;
-        }
-
-        private static GioHang Map(DataRow row)
-        {
-            return new GioHang
+            ds.Add(new GioHang
             {
-                MaNguoiDung = Convert.ToInt32(row["MaNguoiDung"]),
-                MaSP = Convert.ToInt32(row["MaSP"]),
-                SoLuong = Convert.ToInt32(row["SoLuong"])
-            };
+                MaNguoiDung = (int)row["MaNguoiDung"],
+                MaSP = (int)row["MaSP"],
+                SoLuong = (int)row["SoLuong"]
+            });
         }
+        return ds;
     }
 }
