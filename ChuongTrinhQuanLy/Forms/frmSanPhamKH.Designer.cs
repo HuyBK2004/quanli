@@ -26,9 +26,12 @@
         /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
-        private void InitializeComponent()
-        {
-            this.dgvSanPham = new System.Windows.Forms.DataGridView();
+       private System.Windows.Forms.DataGridView dgvSanPham;
+private System.Windows.Forms.Button btnXemGioHang;
+
+private void InitializeComponent()
+{
+    this.dgvSanPham = new System.Windows.Forms.DataGridView();
     this.btnXemGioHang = new System.Windows.Forms.Button();
     ((System.ComponentModel.ISupportInitialize)(this.dgvSanPham)).BeginInit();
     this.SuspendLayout();
@@ -66,11 +69,6 @@
     this.Text = "Sản phẩm";
     ((System.ComponentModel.ISupportInitialize)(this.dgvSanPham)).EndInit();
     this.ResumeLayout(false);
-        }
-
-        #endregion
-
-        private System.Windows.Forms.DataGridView dgvSanPham;
-        private System.Windows.Forms.Label lblTitle;
+}
     }
 }
