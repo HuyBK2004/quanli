@@ -1,133 +1,42 @@
-using System;
 using System.Collections.Generic;
 using System.Data;
-using MySql.Data.MySqlClient;
-using DTO;
+using System.Data.SqlClient;
 
-namespace DataAccess
+public class PhieuNhapDAO
 {
-    public class PhieuNhapDAO
+    public static int TaoPhieuNhap(PhieuNhap pn)
     {
-        public static List<PhieuNhap> GetAll()
-        {
-            string sql = "SELECT * FROM PhieuNhap";
-            var dt = DBHelper.ExecuteQuery(sql);
-            var list = new List<PhieuNhap>();
-            foreach (DataRow row in dt.Rows)
-                list.Add(Map(row));
-            return list;
-        }
+        string sql = "INSERT INTO PhieuNhap(NgayNhap, MaNguoiDung, TrangThai) OUTPUT INSERTED.MaPhieuNhap VALUES(@NgayNhap, @MaNguoiDung, @TrangThai)";
+        var maPN = (int)DBHelper.ExecuteScalar(sql,
+            new SqlParameter("@NgayNhap", pn.NgayNhap),
+            new SqlParameter("@MaNguoiDung", pn.MaNguoiDung),
+            new SqlParameter("@TrangThai", pn.TrangThai));
+        return maPN;
+    }
 
-        public static PhieuNhap GetById(int id)
+    public static List<PhieuNhap> LayDanhSachPhieuNhap()
+    {
+        var ds = new List<PhieuNhap>();
+        string sql = "SELECT * FROM PhieuNhap";
+        DataTable dt = DBHelper.ExecuteQuery(sql);
+        foreach (DataRow row in dt.Rows)
         {
-            string sql = "SELECT * FROM PhieuNhap WHERE MaPhieuNhap=@ID";
-            var dt = DBHelper.ExecuteQuery(sql, new MySqlParameter("@ID", id));
-            if (dt.Rows.Count == 0) return null;
-            return Map(dt.Rows[0]);
-        }
-
-        public static List<PhieuNhap> GetByNguoiDung(int maNguoiDung)
-        {
-            string sql = "SELECT * FROM PhieuNhap WHERE MaNguoiDung=@MaNguoiDung ORDER BY NgayNhap DESC";
-            var dt = DBHelper.ExecuteQuery(sql, new MySqlParameter("@MaNguoiDung", maNguoiDung));
-            var list = new List<PhieuNhap>();
-            foreach (DataRow row in dt.Rows)
+            ds.Add(new PhieuNhap
             {
-                var phieu = Map(row);
-                phieu.ChiTietPhieuNhap = ChiTietPhieuNhapDAO.GetByPhieu(phieu.MaPhieuNhap);
-                list.Add(phieu);
-            }
-            return list;
-        }
-
-        public static int Insert(PhieuNhap pn)
-        {
-            using (var conn = DBHelper.GetConnection())
-            {
-                conn.Open();
-                using (var trans = conn.BeginTransaction())
-                {
-                    try
-                    {
-                        string sql = "INSERT INTO PhieuNhap (MaNguoiDung, TrangThai) VALUES (@MaNguoiDung, @TrangThai); SELECT LAST_INSERT_ID();";
-                        var cmd = new MySqlCommand(sql, conn, trans);
-                        cmd.Parameters.AddWithValue("@MaNguoiDung", pn.MaNguoiDung);
-                        cmd.Parameters.AddWithValue("@TrangThai", pn.TrangThai);
-                        int maPhieuNhap = Convert.ToInt32(cmd.ExecuteScalar());
-
-                        if (pn.ChiTietPhieuNhap != null)
-                        {
-                            foreach (var ct in pn.ChiTietPhieuNhap)
-                            {
-                                ChiTietPhieuNhapDAO.Insert(ct, maPhieuNhap, conn, trans);
-                            }
-                        }
-
-                        trans.Commit();
-                        return maPhieuNhap;
-                    }
-                    catch
-                    {
-                        trans.Rollback();
-                        return -1;
-                    }
-                }
-            }
-        }
-
-        public static bool Update(PhieuNhap pn)
-        {
-            string sql = @"UPDATE PhieuNhap SET MaNguoiDung=@MaNguoiDung, TrangThai=@TrangThai WHERE MaPhieuNhap=@ID";
-            int res = DBHelper.ExecuteNonQuery(sql,
-                new MySqlParameter("@MaNguoiDung", pn.MaNguoiDung),
-                new MySqlParameter("@TrangThai", pn.TrangThai),
-                new MySqlParameter("@ID", pn.MaPhieuNhap)
-            );
-            return res > 0;
-        }
-
-        public static bool Delete(int id)
-        {
-            string sql = "DELETE FROM PhieuNhap WHERE MaPhieuNhap=@ID";
-            int res = DBHelper.ExecuteNonQuery(sql, new MySqlParameter("@ID", id));
-            return res > 0;
-        }
-
-        public static List<PhieuNhap> Search(DateTime? from, DateTime? to, string trangThai = null)
-        {
-            string sql = "SELECT * FROM PhieuNhap WHERE 1=1";
-            var param = new List<MySqlParameter>();
-            if (from.HasValue)
-            {
-                sql += " AND NgayNhap >= @from";
-                param.Add(new MySqlParameter("@from", from.Value));
-            }
-            if (to.HasValue)
-            {
-                sql += " AND NgayNhap <= @to";
-                param.Add(new MySqlParameter("@to", to.Value));
-            }
-            if (!string.IsNullOrEmpty(trangThai))
-            {
-                sql += " AND TrangThai=@TrangThai";
-                param.Add(new MySqlParameter("@TrangThai", trangThai));
-            }
-            var dt = DBHelper.ExecuteQuery(sql, param.ToArray());
-            var list = new List<PhieuNhap>();
-            foreach (DataRow row in dt.Rows)
-                list.Add(Map(row));
-            return list;
-        }
-
-        private static PhieuNhap Map(DataRow row)
-        {
-            return new PhieuNhap
-            {
-                MaPhieuNhap = Convert.ToInt32(row["MaPhieuNhap"]),
-                NgayNhap = Convert.ToDateTime(row["NgayNhap"]),
-                MaNguoiDung = Convert.ToInt32(row["MaNguoiDung"]),
+                MaPhieuNhap = (int)row["MaPhieuNhap"],
+                NgayNhap = (DateTime)row["NgayNhap"],
+                MaNguoiDung = (int)row["MaNguoiDung"],
                 TrangThai = row["TrangThai"].ToString()
-            };
+            });
         }
+        return ds;
+    }
+
+    public static void CapNhatTrangThai(int maPN, string trangThai)
+    {
+        string sql = "UPDATE PhieuNhap SET TrangThai = @TrangThai WHERE MaPhieuNhap = @MaPhieuNhap";
+        DBHelper.ExecuteNonQuery(sql,
+            new SqlParameter("@TrangThai", trangThai),
+            new SqlParameter("@MaPhieuNhap", maPN));
     }
 }
