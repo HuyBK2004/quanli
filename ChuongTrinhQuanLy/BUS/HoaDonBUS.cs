@@ -5,53 +5,73 @@ using DataAccess;
 
 namespace BUS
 {
-    public class HoaDonBUS
+   public class HoaDonBUS
+{
+    // Thanh toán: tạo hóa đơn từ giỏ hàng của khách hàng
+    public int ThanhToan(int maNguoiDung)
     {
-        public static List<HoaDon> GetAll() => HoaDonDAO.GetAll();
+        // Lấy giỏ hàng
+        var dsGio = GioHangDAO.LayGioHang(maNguoiDung);
+        if (dsGio.Count == 0) return -1;
 
-        public static HoaDon GetById(int id) => HoaDonDAO.GetById(id);
-
-        public static int Add(HoaDon hd)
+        decimal tongTien = 0;
+        foreach (var gh in dsGio)
         {
-            hd.NgayLap = DateTime.Now;
-            return HoaDonDAO.Insert(hd);
+            SanPham sp = SanPhamDAO.TimSanPham(gh.MaSP);
+            tongTien += sp.GiaBan * gh.SoLuong;
         }
 
-        public static bool Update(HoaDon hd)
+        var hd = new HoaDon
         {
-            return HoaDonDAO.Update(hd);
+            NgayLap = DateTime.Now,
+            MaNguoiDung = maNguoiDung,
+            TongTien = tongTien
+        };
+        int maHoaDon = HoaDonDAO.ThemHoaDon(hd);
+
+        foreach (var gh in dsGio)
+        {
+            SanPham sp = SanPhamDAO.TimSanPham(gh.MaSP);
+            HoaDonDAO.ThemChiTietHoaDon(new ChiTietHoaDon
+            {
+                MaHoaDon = maHoaDon,
+                MaSP = gh.MaSP,
+                SoLuong = gh.SoLuong,
+                DonGia = sp.GiaBan
+            });
         }
 
-        public static bool Delete(int id)
-        {
-            // TODO: kiểm tra hóa đơn đã thanh toán chưa
-            return HoaDonDAO.Delete(id);
-        }
-
-        public static List<HoaDon> Search(DateTime? from, DateTime? to)
-        {
-            return HoaDonDAO.Search(from, to);
-        }
-
-        // Chi tiết hóa đơn
-        public static List<ChiTietHoaDon> GetChiTiet(int maHoaDon)
-        {
-            return ChiTietHoaDonDAO.GetByHoaDon(maHoaDon);
-        }
-
-        public static bool AddChiTiet(ChiTietHoaDon ct)
-        {
-            return ChiTietHoaDonDAO.Insert(ct);
-        }
-
-        public static bool UpdateChiTiet(ChiTietHoaDon ct)
-        {
-            return ChiTietHoaDonDAO.Update(ct);
-        }
-
-        public static bool DeleteChiTiet(int maHoaDon, int maSP)
-        {
-            return ChiTietHoaDonDAO.Delete(maHoaDon, maSP);
-        }
+        GioHangDAO.XoaToanBoGioHang(maNguoiDung);
+        return maHoaDon;
     }
+
+    // Tạo hóa đơn thủ công (cho thu ngân)
+    public int TaoHoaDon(int maNguoiDung, List<ChiTietHoaDon> dsSanPham)
+    {
+        decimal tongTien = 0;
+        foreach (var ct in dsSanPham)
+        {
+            tongTien += ct.DonGia * ct.SoLuong;
+        }
+        var hd = new HoaDon
+        {
+            NgayLap = DateTime.Now,
+            MaNguoiDung = maNguoiDung,
+            TongTien = tongTien
+        };
+        int maHoaDon = HoaDonDAO.ThemHoaDon(hd);
+
+        foreach (var ct in dsSanPham)
+        {
+            ct.MaHoaDon = maHoaDon;
+            HoaDonDAO.ThemChiTietHoaDon(ct);
+        }
+        return maHoaDon;
+    }
+
+    public List<HoaDon> LayDanhSachHoaDon(string maSP = null)
+    {
+        return HoaDonDAO.LayDanhSachHoaDon(maSP);
+    }
+}
 }
