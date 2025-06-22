@@ -5,47 +5,56 @@ using DataAccess;
 
 namespace BUS
 {
-    public class PhieuNhapBUS
+    public int TaoPhieuNhap(PhieuNhap pn, List<ChiTietPhieuNhap> dsChiTiet)
     {
-        public static List<PhieuNhap> GetAll() => PhieuNhapDAO.GetAll();
-
-        public static PhieuNhap GetById(int id) => PhieuNhapDAO.GetById(id);
-
-        public static List<PhieuNhap> GetByNguoiDung(int maNguoiDung)
-            => PhieuNhapDAO.GetByNguoiDung(maNguoiDung);
-
-        public static int Insert(PhieuNhap phieu)
+        int maPN = PhieuNhapDAO.TaoPhieuNhap(pn);
+        foreach (var ct in dsChiTiet)
         {
-            phieu.TrangThai = "ChoDuyet";
-            return PhieuNhapDAO.Insert(phieu); // DAO xử lý transaction
+            ct.MaPhieuNhap = maPN;
+            ChiTietPhieuNhapDAO.ThemChiTietPhieuNhap(ct);
         }
-
-        public static bool Update(PhieuNhap pn)
-            => PhieuNhapDAO.Update(pn);
-
-        public static bool Delete(int id)
-            => PhieuNhapDAO.Delete(id);
-
-        public static List<PhieuNhap> Search(DateTime? from, DateTime? to, string trangThai = null)
-            => PhieuNhapDAO.Search(from, to, trangThai);
-
-        // --- Chi tiết phiếu nhập ---
-
-        public static List<ChiTietPhieuNhap> GetChiTiet(int maPhieuNhap)
-            => ChiTietPhieuNhapDAO.GetByPhieu(maPhieuNhap);
-
-        public static bool AddChiTiet(ChiTietPhieuNhap ct)
-            => ChiTietPhieuNhapDAO.Insert(ct);
-
-        public static bool UpdateChiTiet(ChiTietPhieuNhap ct)
-            => ChiTietPhieuNhapDAO.Update(ct);
-
-        public static bool DeleteChiTiet(int maPhieuNhap, int maSP)
-            => ChiTietPhieuNhapDAO.Delete(maPhieuNhap, maSP);
-
-        internal static int Add(PhieuNhap pn)
-        {
-            throw new NotImplementedException();
-        }
+        return maPN;
     }
+
+    public List<PhieuNhap> LayDanhSachPhieuNhap()
+    {
+        return PhieuNhapDAO.LayDanhSachPhieuNhap();
+    }
+
+    public void CapNhatTrangThai(int maPN, string trangThai)
+    {
+        PhieuNhapDAO.CapNhatTrangThai(maPN, trangThai);
+    }
+
+    // Duyệt phiếu nhập (chủ cửa hàng)
+    public void DuyetPhieuNhap(int maPN, bool chapNhan)
+    {
+        var dsChiTiet = ChiTietPhieuNhapDAO.LayDanhSachTheoPhieu(maPN);
+        foreach (var ct in dsChiTiet)
+        {
+            var sp = SanPhamDAO.TimSanPham(ct.MaSP);
+            if (chapNhan)
+            {
+                if (sp != null)
+                {
+                    SanPhamDAO.TangSoLuongSanPham(ct.MaSP, ct.SoLuong);
+                }
+                else
+                {
+                    var spMoi = new SanPham
+                    {
+                        MaSP = ct.MaSP,
+                        TenSP = "[Tạo từ phiếu nhập]",
+                        MoTa = "",
+                        GiaBan = ct.GiaNhap,
+                        DonViTinh = "",
+                        TrangThai = "DangBan"
+                    };
+                    SanPhamDAO.ThemSanPham(spMoi);
+                }
+            }
+        }
+        PhieuNhapDAO.CapNhatTrangThai(maPN, chapNhan ? "DaDuyet" : "TuChoi");
+    }
+    
 }
