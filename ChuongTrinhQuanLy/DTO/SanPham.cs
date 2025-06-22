@@ -1,3 +1,5 @@
+namespace DTO
+
 public class SanPham
 {
     public int MaSP { get; set; }
