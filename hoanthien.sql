@@ -1,0 +1,1 @@
+SELECT * FROM NguoiDung WHERE Username='admin';
