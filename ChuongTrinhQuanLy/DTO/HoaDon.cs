@@ -1,5 +1,7 @@
 using System;
 
+namespace DTO
+
 public class HoaDon
 {
     public int MaHoaDon { get; set; }
