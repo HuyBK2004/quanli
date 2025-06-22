@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 
+namespace DataAccess
+{
 public class SanPhamDAO
 {
     public static List<SanPham> LayTatCaSanPham()
@@ -59,4 +61,5 @@ public class SanPhamDAO
             TrangThai = row["TrangThai"].ToString()
         };
     }
+}
 }
